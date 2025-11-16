@@ -1,5 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import './App.css'
+import Canvas from './components/Canvas'
+import LayoutStorage from './components/LayoutStorage'
+import PdfExport from './components/PdfExport'
+import StyleThemes from './components/StyleThemes'
 
 function App() {
   const [resumeData, setResumeData] = useState({
@@ -56,14 +60,46 @@ function App() {
     })
   }
 
+  // 画布引用
+  const canvasRef = useRef(null);
+
+  // 加载布局数据
+  const loadLayout = (layoutData) => {
+    if (canvasRef.current) {
+      const canvas = canvasRef.current;
+      canvas.clear();
+      canvas.loadFromJSON(layoutData, () => {
+        canvas.renderAll();
+      });
+    }
+  };
+
+  // 画布准备好时的回调
+  const handleCanvasReady = (canvas) => {
+    canvasRef.current = canvas;
+  }
+
   return (
     <div className="app-container">
       <header className="app-header">
         <h1>可视化简历生成器</h1>
       </header>
       <main className="app-main">
-        <div className="editor-section">
-          <h2>简历编辑</h2>
+        {/* 左侧画布区域 */}
+        <div className="canvas-section">
+          <Canvas
+            ref={canvasRef}
+            onCanvasReady={handleCanvasReady}
+            resumeData={resumeData}
+          />
+        </div>
+
+        {/* 右侧控制面板 */}
+        <div className="control-panel">
+          {/* 简历编辑 */}
+          <div className="editor-section">
+            <h2>简历编辑</h2>
+          </div>
           
           {/* 个人信息 */}
           <div className="form-section">
@@ -336,6 +372,15 @@ function App() {
               </div>
             </div>
           </div>
+
+          {/* PDF 导出 */}
+          <PdfExport canvas={canvasRef.current} />
+
+          {/* 布局存储 */}
+          <LayoutStorage canvas={canvasRef.current} onLoadLayout={loadLayout} />
+
+          {/* 样式主题 */}
+          <StyleThemes canvas={canvasRef.current} />
         </div>
       </main>
     </div>
